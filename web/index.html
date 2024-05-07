@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Brand</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic">
+    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    <link rel="stylesheet" href="assets/css/untitled.css">
+</head>
+
+<body id="page-top" style="background: url(&quot;assets/img/bg.jpg&quot;) center;width: 100%;height: 100% "><a
+        class="menu-toggle rounded" href="#"><i class="fa fa-bars"></i></a>
+<header class="d-flex flex-column masthead" style="width: 100%;height: 100%;padding-top: 0px;padding-bottom: 0px;">
+    <div id="media"
+         class="d-flex d-xxl-flex flex-column justify-content-center align-items-center justify-content-xxl-center align-items-xxl-center"
+         style="width: 100%;height: 100%;">
+        <audio id="audio" autoplay="true"></audio>
+        <video autoplay="true" id="video" playsinline="true"></video>
+
+        <div class="d-flex flex-row align-items-center align-content-center"
+             style="height: 60px;width: 100%;margin: 30px;">
+            <input id="message" class="echo-form" type="text"
+                   style="height: 80%;margin-left: 28%;width: 40%;background: rgba(255,255,255,0.1);border-width: 0px;border-radius: 10px;">
+            <button class="btn btn-primary" data-bss-hover-animate="pulse" onclick="send()" type="button"
+                    style="height: 100%;width: 120px;margin-left: 1%;background: rgba(255,255,255,0);border-width: 3px;border-radius: 25px;">
+                Send
+            </button>
+        </div>
+        <div class="d-flex flex-row justify-content-center align-items-center justify-content-xxl-center align-items-xxl-center"
+             style="width: 60%;margin-left: 20%;margin-right: 20%;">
+            <button class="btn btn-primary d-xxl-flex justify-content-xxl-center align-items-xxl-center" type="button"
+                    id="start"
+                    onclick="start()" style="width: 100px;height: 50px;margin-left: 0px;">Start
+            </button>
+
+            <button class="btn btn-primary d-xxl-flex justify-content-xxl-center align-items-xxl-center" type="button"
+                    id="start"
+                    onclick="start()" style="width: 100px;height: 50px;margin-left: 0px; display: none">Stop
+            </button>
+            <button class="btn btn-primary" type="button" style="width: 100px;height: 50px;margin-left: 60px;">Voice
+            </button>
+        </div>
+    </div>
+</header>
+
+<script src="client.js"></script>
+<script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.4.js"></script>
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<!--    <script src="assets/bootstrap/js/bootstrap.min.js"></script>-->
+<!--    <script src="assets/js/bs-init.js"></script>-->
+<!--    <script src="assets/js/stylish-portfolio.js"></script>-->
+</body>
+
+<script type="text/javascript" charset="utf-8">
+    var ws = null;
+
+    function send() {
+        // Check if ws exists
+        if (typeof ws !== 'undefined' && ws) {
+            var inputVal = document.getElementById('message').value;
+            if (inputVal) {
+                console.log('Sending: ' + inputVal);
+                ws.send(inputVal);
+                // Clear the input field
+                document.getElementById('message').value = '';
+            }
+        } else {
+            console.log("WebSocket is not defined or not open.");
+        }
+    }
+
+    $(document).ready(function () {
+        var host = window.location.hostname
+        ws = new WebSocket("ws://" + host + ":8000/humanecho");
+        //document.getElementsByTagName("video")[0].setAttribute("src", aa["video"]);
+        ws.onopen = function () {
+            console.log('Connected');
+        };
+        ws.onmessage = function (e) {
+            console.log('Received: ' + e.data);
+            data = e
+            var vid = JSON.parse(data.data);
+            console.log(typeof (vid), vid)
+            //document.getElementsByTagName("video")[0].setAttribute("src", vid["video"]);
+
+        };
+        ws.onclose = function (e) {
+            console.log('Closed');
+        };
+
+        $('#echo-form').on('submit', function (e) {
+            e.preventDefault();
+            var message = $('#message').val();
+            console.log('Sending: ' + message);
+            ws.send(message);
+            $('#message').val('');
+        });
+
+
+    });
+</script>
+
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Garurumon</title>
+    <style>
+    button {
+        padding: 8px 16px;
+    }
+
+    </style>
+</head>
+<body>
+
+<!--<div class="option">-->
+<!--    <input id="use-stun" type="checkbox"/>-->
+<!--    <label for="use-stun">Use STUN server</label>-->
+<!--</div>-->
+
+<div id="media" style="display: flex; flex-direction: column; justify-content: center; align-items: center;  width: 100%; height: 100%; ">
+    <audio id="audio" autoplay="true"  style=" solid 2px;"></audio>
+    <video id="video" autoplay="true"  style=" solid 2px; height: 800px; width: 800px;" playsinline="true"></video>
+</div>
+
+<!-- <div id="media" style="display: flex; flex-direction: column; justify-content: center; align-items: center;  width: 100%; height: 100%;">
+    <audio id="audio" autoplay="true"  style=""></audio>
+    <video id="video" autoplay="true"  style="border: solid 2px; position: fixed; bottom:20px; left:0; right:0; margin-left: auto; margin-right: auto; height: 100% width: 100%;" playsinline="true"></video>
+</div> -->
+
+
+<form  style="display: flex; justify-content: center; align-items: center;  position: fixed; bottom:120px; left:0; right:0; margin-left: auto; margin-right: auto;" id="echo-form">
+    <div class="form-group" style="width: 600px;">
+      <!-- <p>input text</p> -->
+      <textarea style="width: 100%; padding-left: 20px ;padding-right: 20px; padding-top: 20px; border-radius: 10px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 25px; line-height:30px" class="form-control" id="message" placeholder="请输入内容:" ></textarea>
+    </div>
+	<div >
+		<button style="margin-left: 80px;  width: 120px; height: 75px; border-radius: 25px; padding-left: 12px; padding-right: 12px; padding-top: 20px; padding-bottom: 20px; font-size: 30px;" type="submit" class="btn btn-default">Send</button>
+	</div>
+</form>
+
+
+<div style="display: flex; flex-direction: row; align-items: center; justify-content: space-around; ;  
+position: fixed; bottom:30px; left:0; right:0; margin-left: auto; margin-right: auto; width: 1000px;">
+	<div>
+		<button  id="start" onclick="start()" style="width: 150px; height: 70px; font-size: 20px;">启动</button>
+		<button id="stop" style="display: none ;width: 150px; height: 70px;font-size: 20px;" onclick="stop()">停止</button>
+	</div>
+	
+	<div>
+		<button id="start_voice" style="width: 150px; height: 70px; font-size: 20px;" onclick="start_voice">开启语音</button>
+		<button id="stop_voice" style="display: none ; width: 150px; height: 70px; font-size: 20px;" onclick="stop_voice">关闭语音</button>
+	</div>
+</div>
+
+
+
+<script src="client.js"></script>
+<script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.4.js"></script>
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+</body>
+<script type="text/javascript" charset="utf-8">
+
+	$(document).ready(function() {
+	  var host = window.location.hostname
+	  var ws = new WebSocket("ws://"+host+":8000/humanecho");
+	  //document.getElementsByTagName("video")[0].setAttribute("src", aa["video"]);
+	  ws.onopen = function() {
+		console.log('Connected');
+	  };
+	  ws.onmessage = function(e) {
+		console.log('Received: ' + e.data);
+		data = e
+		var vid = JSON.parse(data.data);
+		console.log(typeof(vid),vid)
+		//document.getElementsByTagName("video")[0].setAttribute("src", vid["video"]);
+
+	  };
+	  ws.onclose = function(e) {
+		console.log('Closed');
+	  };
+
+	  $('#echo-form').on('submit', function(e) {
+		e.preventDefault();
+		var message = $('#message').val();
+		console.log('Sending: ' + message);
+		ws.send(message);
+		$('#message').val('');
+	  });
+	});
+</script>
+</html>

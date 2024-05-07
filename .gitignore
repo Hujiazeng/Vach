@@ -1,0 +1,15 @@
+*.git
+*.idea
+venv/
+.vscode
+__pycache__/
+build/
+*.egg-info/
+*.so
+*.mp4
+*.png
+*.jpg
+
+talkers/er_nerf/data_utils/face_tracking/3DMM/*
+talkers/er_nerf/data/obama/template.npy
+talkers/er_nerf/data_utils/face_parsing/79999_iter.pth
