@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='obama')
     opt = parser.parse_args()
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
-    opt.real_fps = 15
+    opt.real_fps = 18
     opt.real_fps = min(opt.real_fps, 25)  # <=25
 
     # aiortc
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         er_nerf_link.process_silence_template_video(output_path=er_nerf_link.opt.template, num=300)
 
     if opt.mike:
-        mike_listener = MikeListener(link=er_nerf_link, tts_type=opt.tts)
+        mike_listener = MikeListener(loop=asyncio.get_event_loop(), link=er_nerf_link, tts_type=opt.tts)
         mike_listener.start()
 
     print('start websocket server')

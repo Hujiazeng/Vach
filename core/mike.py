@@ -20,7 +20,7 @@ release_time = 0.75
 
 
 class MikeListener(object):
-    def __init__(self, device="", link=None, tts_type=None):
+    def __init__(self, loop, device="", link=None, tts_type=None):
         self.device = device
         self.history_level = []
         self.history_data = []
@@ -34,10 +34,10 @@ class MikeListener(object):
 
         self.asr_client = self.new_asrclient()
 
-
         # nerf
         self.link = link
         self.tts_type = tts_type
+        self.loop = loop
 
     def start(self):
         Thread(target=self.accept).start()
@@ -49,7 +49,6 @@ class MikeListener(object):
     def new_asrclient(self):
         asrcli = FunASR()
         return asrcli
-
 
     def get_history_average(self, number):
         total = 0
@@ -129,11 +128,9 @@ class MikeListener(object):
             time.sleep(0.01)
 
         text = asr_client.finalResults
-        print( "语音处理完成！ 耗时: {} ms".format(math.floor((time.time() - tm) * 1000)))
+        print("语音处理完成！ 耗时: {} ms".format(math.floor((time.time() - tm) * 1000)))
         print(text)
         return text
-
-
 
     def accept(self):
         print('开启录音服务...')
@@ -185,7 +182,7 @@ class MikeListener(object):
             can_listen = True  # 是否可以监听
             if percentage > self.dynamic_threshold and can_listen:  # 当前音量大于监听的音量
                 last_speaking_time = time.time()
-                if not self.processing and not is_speaking and time.time() - last_mute_time > START_TIME and len(self.link.asr.queue.queue) <= 0:
+                if not self.processing and not is_speaking and time.time() - last_mute_time > START_TIME: #and len(self.link.asr.queue.queue) <= 0:
                     soon = True  #
                     is_speaking = True  # 用户正在说话
                     print("聆听中...")
@@ -214,13 +211,15 @@ class MikeListener(object):
                         else:
                             response_text = question(asr_text)
                             if self.link and self.tts_type:
-                                self.link.say(response_text, self.tts_type)
+                                self.loop.run_until_complete(self.link.say(response_text, tts_type=self.tts_type))
+                            else:
+                                print("[!] 驱动失败！")
+                            self.processing = False
 
             if not soon and is_speaking:
                 concatenated_audio.extend(data)
 
 
 if __name__ == '__main__':
-    print('开启录音服务...')
     mike_listener = MikeListener("")  # 监听麦克风
     mike_listener.start()
