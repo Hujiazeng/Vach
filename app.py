@@ -11,6 +11,7 @@ from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
 import asyncio
 
+from core.mike import MikeListener
 from core.stream_track import MetaHumanPlayer
 from links.er_nerf.er_nerf_link import ErNerfLink
 # from links.test_link import LinkTes
@@ -85,8 +86,7 @@ async def on_shutdown(app):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--real_fps', type=int, default=25)
-    parser.add_argument('--data_path', type=str, default=r"H:\code\face\Vach\talkers\er_nerf\data\obama")
-    parser.add_argument('--asr_model', type=str, default=r"H:\code\face\Vach\talkers\er_nerf\data\obama")
+    parser.add_argument('--mike', action='store_true', help="start mike listen")
     parser.add_argument('--tts', type=str, default='edgetts')  # xtts gpt-sovits
     parser.add_argument('--torso_imgs', type=str, default="", help="torso images path")
     parser.add_argument('--W', type=int, default=450, help="GUI width")
@@ -120,6 +120,10 @@ if __name__ == '__main__':
     er_nerf_link = ErNerfLink(opt)
     if not os.path.exists(er_nerf_link.opt.template):
         er_nerf_link.process_silence_template_video(output_path=er_nerf_link.opt.template, num=300)
+
+    if opt.mike:
+        mike_listener = MikeListener(link=er_nerf_link, tts_type=opt.tts)
+        mike_listener.start()
 
     print('start websocket server')
     server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)

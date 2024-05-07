@@ -599,15 +599,6 @@ class ErNerfLink:
 
     def get_video_stream(self):
         video_streams = []
-        # inputFolder = r'H:\code\face\ER-NeRF\data\Obama\gt_imgs'
-        # image_names = os.listdir(inputFolder)
-        # filelist = sorted(image_names, key=lambda x: int(x.split('.')[0]))[:300]
-        # for image_name in filelist:
-        #     A = cv2.imread(os.path.join(inputFolder, image_name))
-        #     A = cv2.cvtColor(A, cv2.COLOR_BGR2RGB)
-        #     video_frame = VideoFrame.from_ndarray(A, format="rgb24")
-        #     video_streams.append(video_frame)
-
         template_video = np.load(self.opt.template)
         for frame in template_video:
             video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
@@ -641,18 +632,6 @@ class ErNerfLink:
             self.loop = loop
 
         self.asr.warm_up()
-
-        # just test insert
-        # video_streams = []
-        # inputFolder = r'H:\code\face\ER-NeRF\data\may450\gt_imgs'
-        # image_names = os.listdir(inputFolder)
-        # filelist = sorted(image_names, key=lambda x: int(x.split('.')[0]))[:30]
-        # for image_name in tqdm(filelist):
-        #     A = cv2.imread(os.path.join(inputFolder, image_name))
-        #     # A = cv2.cvtColor(np.array(A), cv2.COLOR_BGR2RGB)
-        #     # A = Image.open(os.path.join(inputFolder, image_name))
-        #     video_frame = VideoFrame.from_ndarray(A, format="rgb24")
-        #     video_streams.append(video_frame)
 
         while not quit_event.is_set():
             # t = time.time()
@@ -756,11 +735,12 @@ class ErNerfLink:
             stream = resampy.resample(x=stream, sr_orig=sample_rate, sr_new=self.asr.sample_rate)
         return stream
 
-    async def say(self, text, voicename="zh-CN-YunxiaNeural"):
-        communicate = edge_tts.Communicate(text, voicename)
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                self.push_audio(chunk["data"])
+    async def say(self, text, voicename="zh-CN-YunxiaNeural", tts_type="edgetts"):
+        if tts_type == "edgetts":
+            communicate = edge_tts.Communicate(text, voicename)
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    self.push_audio(chunk["data"])
 
     def process_silence_template_video(self, output_path, num=300):
         print('Generate silence template video...')
