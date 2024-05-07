@@ -39,6 +39,8 @@ def set_opt(opt):
     opt.template = os.path.join(data_path, "template.npy")
     opt.bg_img = "white"
     opt.torso_imgs = ''
+    opt.W = 450
+    opt.H = 450
 
     # fixed
     opt.num_rays = 65536
@@ -525,8 +527,8 @@ class ErNerfLink:
         self.opt = set_opt(opt)
         self.user_audio_list = []  # audio length
         seed_everything(opt.seed)
-        self.W = opt.W
-        self.H = opt.H
+        self.W = self.opt.W
+        self.H = self.opt.H
         print(opt)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model = NeRFNetwork(opt)
@@ -717,7 +719,7 @@ class ErNerfLink:
                     asyncio.run_coroutine_threadsafe(self.audio_track._queue.put(audio_frame), self.loop)
 
                 count += 1
-            print(f"------block fps------ : {count / time.time() - t:.4f}")
+            print(f"------block fps------ : {count / (time.time()-t) :.4f}")
             # print("Block Finished")
 
     def get_adapter_stream(self, byte_stream):

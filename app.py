@@ -88,14 +88,11 @@ if __name__ == '__main__':
     parser.add_argument('--real_fps', type=int, default=25)
     parser.add_argument('--mike', action='store_true', help="start mike listen")
     parser.add_argument('--tts', type=str, default='edgetts')  # xtts gpt-sovits
-    parser.add_argument('--torso_imgs', type=str, default="", help="torso images path")
-    parser.add_argument('--W', type=int, default=450, help="GUI width")
-    parser.add_argument('--H', type=int, default=450, help="GUI height")
     parser.add_argument('--link_name', type=str, default='er_nerf', help="Choose Link")  # er_nerf
     parser.add_argument('--model_name', type=str, default='obama')
     opt = parser.parse_args()
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
-    opt.real_fps = 17
+    opt.real_fps = 15
     opt.real_fps = min(opt.real_fps, 25)  # <=25
 
     # aiortc
