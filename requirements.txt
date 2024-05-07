@@ -32,6 +32,3 @@ flask
 flask_sockets
 opencv-python-headless
 aiortc
-audioop
-tempfile
-wave
