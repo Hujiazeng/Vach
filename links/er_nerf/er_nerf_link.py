@@ -30,7 +30,7 @@ from talkers.er_nerf.nerf_triplane.utils import get_bg_coords, get_audio_feature
 
 def set_opt(opt):
     # Custom Settings
-    data_path = os.path.join(opt.base_dir ,os.path.join("talkers\\" + opt.link_name, "data\\" + opt.model_name))
+    data_path = os.path.join(opt.base_dir, "talkers", opt.link_name, "data", opt.model_name)
     opt.asr_model = 'cpierse/wav2vec2-large-xlsr-53-esperanto' # r'C:\Users\k\.cache\huggingface\hub\models--cpierse--wav2vec2-large-xlsr-53-esperanto\snapshots\5ae6c3174dddd1261dd2816eeb6f060655042026'
     opt.preload = 2
     opt.pose = os.path.join(data_path, "transforms_train.json")
