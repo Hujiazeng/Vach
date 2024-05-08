@@ -472,7 +472,7 @@ class ASR:
             # print(f'[INFO] get audio frame {frame.shape}')
         except queue.Empty:
             frame = np.zeros(self.chunk, dtype=np.float32)  # 无音频填充空数据
-            print('[INFO] get Empty audio frame')
+            # print('[INFO] get Empty audio frame')
         self.idx = self.idx + self.chunk
         return frame
 
@@ -643,7 +643,7 @@ class ErNerfLink:
 
             audio_chunk_num = self.user_audio_list.pop(0)  # 320 0.02s
             # n_frame = int(audio_chunk_num / 2) + 1
-            n_frame = int(audio_chunk_num * (0.02*25))   # test
+            n_frame = int(audio_chunk_num * (0.02*(25))) + 25  # 约等容许误差
             # print('输入总帧数： ', n_frame)
 
             # calculate time block
@@ -653,7 +653,7 @@ class ErNerfLink:
             # 计算相差帧数
             # audio_time = int((n_frame / 25)) + 1
             audio_time = int((n_frame / 25))
-            distance_frame = int((25 - self.opt.real_fps) * audio_time) + 25  # 默认+1s
+            distance_frame = int((25 - self.opt.real_fps) * audio_time) # + 25  # 默认+1s
             # 计算下一帧出现位置  _streams.
             # 上一段未播放完毕
             if self.video_track.blocks:  # [block1, clear, block2, clear block3]

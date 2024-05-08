@@ -63,7 +63,7 @@ position: fixed; bottom:30px; left:0; right:0; margin-left: auto; margin-right: 
 
 	$(document).ready(function() {
 	  var host = window.location.hostname
-	  var ws = new WebSocket("ws://"+host+":8000/humanecho");
+	  var ws = new WebSocket("ws://"+host+":30003/humanecho");
 	  //document.getElementsByTagName("video")[0].setAttribute("src", aa["video"]);
 	  ws.onopen = function() {
 		console.log('Connected');

@@ -123,5 +123,5 @@ if __name__ == '__main__':
         mike_listener.start()
 
     print('start websocket server')
-    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('0.0.0.0', 30003), app, handler_class=WebSocketHandler)
     server.serve_forever()
