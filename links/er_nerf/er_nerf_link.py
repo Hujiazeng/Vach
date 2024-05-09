@@ -643,7 +643,7 @@ class ErNerfLink:
 
             audio_chunk_num = self.user_audio_list.pop(0)  # 320 0.02s
             # n_frame = int(audio_chunk_num / 2) + 1
-            n_frame = int(audio_chunk_num * (0.02*(25))) + 25  # 约等容许误差
+            n_frame = int(audio_chunk_num * (0.02*(25)))
             # print('输入总帧数： ', n_frame)
 
             # calculate time block
@@ -652,8 +652,8 @@ class ErNerfLink:
             #
             # 计算相差帧数
             # audio_time = int((n_frame / 25)) + 1
-            audio_time = int((n_frame / 25))
-            distance_frame = int((25 - self.opt.real_fps) * audio_time) # + 25  # 默认+1s
+            audio_time = int((n_frame / 25)) + 1
+            distance_frame = int((25 - self.opt.real_fps) * audio_time) + 25 # + 25  # 默认+1s
             # 计算下一帧出现位置  _streams.
             # 上一段未播放完毕
             if self.video_track.blocks:  # [block1, clear, block2, clear block3]
@@ -744,12 +744,16 @@ class ErNerfLink:
                 if chunk["type"] == "audio":
                     self.push_audio(chunk["data"])
 
-    def process_silence_template_video(self, output_path, num=300):
+    def process_silence_template_video(self, output_path, num=300, start_idx=0):
         print('Generate silence template video...')
         template_video = []
         self.loader = iter(self.data_loader)
         min_len = min(len(self.data_loader), num)
-        for _ in tqdm(range(min_len)):
+        for i in tqdm(range(min_len)):
+            if i <= start_idx:
+                continue
+            start_idx += 1
+
             try:
                 data = next(self.loader)
             except StopIteration:

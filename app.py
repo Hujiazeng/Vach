@@ -87,12 +87,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--real_fps', type=int, default=25)
     parser.add_argument('--mike', action='store_true', help="start mike listen")
-    parser.add_argument('--tts', type=str, default='edgetts')  # xtts gpt-sovits
+    parser.add_argument('--tts', type=str, default='edgetts')  # xtts
     parser.add_argument('--link_name', type=str, default='er_nerf', help="Choose Link")  # er_nerf
     parser.add_argument('--model_name', type=str, default='obama')
     opt = parser.parse_args()
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
-    opt.real_fps = 18
+    opt.real_fps = 15
     opt.real_fps = min(opt.real_fps, 25)  # <=25
 
     # aiortc
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # link_test = LinkTes()
     er_nerf_link = ErNerfLink(opt)
     if not os.path.exists(er_nerf_link.opt.template):
-        er_nerf_link.process_silence_template_video(output_path=er_nerf_link.opt.template, num=300)
+        er_nerf_link.process_silence_template_video(output_path=er_nerf_link.opt.template, num=300, start_idx=0)
 
     if opt.mike:
         mike_listener = MikeListener(loop=asyncio.get_event_loop(), link=er_nerf_link, tts_type=opt.tts)
