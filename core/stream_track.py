@@ -44,6 +44,7 @@ class PlayerStreamTrack(MediaStreamTrack):
         self.blocks = []
         self.audio_chunk = 320  # 16000/(25fps*2)
         self.flag = False # test
+        self.n_frame = 0
 
         # 默认空音频
         audio_frame = np.zeros(self.audio_chunk, dtype=np.float32)
@@ -92,13 +93,13 @@ class PlayerStreamTrack(MediaStreamTrack):
 
             if not self.has_block and self.blocks:
                 # 取一个block 初始化状态
-                self.insert_frame_laps, self.insert_frame_idx, self.end_frame_laps, self.end_frame_idx, n_frame = self.blocks.pop(0)
-                self._player.block_audio_frames = n_frame * 2
+                self.insert_frame_laps, self.insert_frame_idx, self.end_frame_laps, self.end_frame_idx, self.n_frame = self.blocks.pop(0)
                 self.laps = 0
                 self.has_block = True
 
             if self.has_block and self.laps == self.insert_frame_laps and self.train_data_idx == self.insert_frame_idx:
                 self._player.read_from_render = True
+                self._player.block_audio_frames = self.n_frame * 2
                 self._player.listen_from_render = True
                 self.flag = True  # test
                 # print('Read from render ')
@@ -124,7 +125,7 @@ class PlayerStreamTrack(MediaStreamTrack):
 
         else:
             # audio
-            if self._player.read_from_render:    # use video read from render not accurate
+            if self._player.block_audio_frames:    # use video read from render not accurate
                 if self._player.listen_from_render:
                     # print('First Into Audio Time: ', time.time())
                     # print("Left Audio Length: ", self._queue.qsize())
@@ -137,6 +138,8 @@ class PlayerStreamTrack(MediaStreamTrack):
                     frame = await asyncio.wait_for(self._queue.get(), 1)  # 阻塞会影响timestamp计算导致卡顿
                 except asyncio.TimeoutError:
                     frame = self.default_audio_frame
+
+                self._player.block_audio_frames -= 1
                 # frame = await self._queue.get()  # 阻塞等待  # todo  上一段没播放完毕
                 # print("!!! end Audio Read from render !!!")
                 # print("Audio frame-------")

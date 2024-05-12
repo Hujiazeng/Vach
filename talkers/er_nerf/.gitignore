@@ -17,3 +17,4 @@ scripts/*
 
 pretrained
 *.mp4
+config.py

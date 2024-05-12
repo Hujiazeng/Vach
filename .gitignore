@@ -13,3 +13,6 @@ build/
 talkers/er_nerf/data_utils/face_tracking/3DMM/*
 talkers/er_nerf/data/obama/template.npy
 talkers/er_nerf/data_utils/face_parsing/79999_iter.pth
+
+talkers/er_nerf/config.py
+cache_data
