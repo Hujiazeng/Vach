@@ -99,7 +99,7 @@ if __name__ == '__main__':
     web_app = web.Application()
     web_app.on_shutdown.append(on_shutdown)
     web_app.router.add_post("/offer", offer)
-    web_app.router.add_static('/', path='web')
+    web_app.router.add_static('/', path=os.path.join(opt.base_dir, 'web'))
 
 
     def run_server(runner):
