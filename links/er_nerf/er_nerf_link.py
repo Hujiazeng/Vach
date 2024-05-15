@@ -560,8 +560,6 @@ class ErNerfLink:
         if self.loop is None:
             self.loop = loop
 
-        self.asr.warm_up()
-
         while not quit_event.is_set():
             # t = time.time()
             if not self.user_audio_list:

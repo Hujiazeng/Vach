@@ -8,7 +8,7 @@
 - [x] **监听麦克风输入**
 - [x] **语言模型回复**
 - [ ] **声音克隆**
-- [ ] **SyncTalk项目支持**
+- [x] **SyncTalk项目支持**
 - [ ] **直播间业务**
 - [ ] **展厅显示屏互动**
 
@@ -65,11 +65,12 @@ export HF_ENDPOINT=https://hf-mirror.com
 
 
 如果项目对你有帮助，帮忙点个star。也欢迎感兴趣的朋友一起来完善该项目。
+
 微信：hairong0907 加我进交流群
 
 
 ## Acknowledgement
-This code is developed heavily relying on [metahuman-stream](https://github.com/lipku/metahuman-stream), and also [ER-NeRF](https://github.com/Fictionarry/ER-NeRF).
+This code is developed heavily relying on [aiortc](https://github.com/aiortc/aiortc), and also [ER-NeRF](https://github.com/Fictionarry/ER-NeRF) and  [SyncTalk](https://github.com/ZiqiaoPeng/SyncTalk).
 
 Thanks for these great projects.
 

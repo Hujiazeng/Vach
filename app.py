@@ -13,8 +13,7 @@ import asyncio
 
 from core.mike import MikeListener
 from core.stream_track import MetaHumanPlayer
-from links.er_nerf.er_nerf_link import ErNerfLink
-# from links.test_link import LinkTes
+from links import implement
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -38,7 +37,7 @@ async def offer(request):
             await pc.close()
             pcs.discard(pc)
 
-    player = MetaHumanPlayer(er_nerf_link)
+    player = MetaHumanPlayer(link)
     audio_sender = pc.addTrack(player.audio)
     video_sender = pc.addTrack(player.video)
 
@@ -69,7 +68,7 @@ def echo_socket(ws):
         while True:
             message = ws.receive()
             if message:
-                asyncio.get_event_loop().run_until_complete(er_nerf_link.say(message))
+                asyncio.get_event_loop().run_until_complete(link.say(message))
             else:
                 return '输入信息为空'
 
@@ -88,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--real_fps', type=int, default=25)
     parser.add_argument('--mike', action='store_true', help="start mike listen")
     parser.add_argument('--tts', type=str, default='edgetts')  # xtts
-    parser.add_argument('--link_name', type=str, default='er_nerf', help="Choose Link")  # er_nerf
+    parser.add_argument('--link_name', type=str, default='SyncTalk', help="Choose Link")  # ErNerf SyncTalk
     parser.add_argument('--model_name', type=str, default='obama')
     opt = parser.parse_args()
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
@@ -113,13 +112,14 @@ if __name__ == '__main__':
 
     Thread(target=run_server, args=(web.AppRunner(web_app),)).start()
 
-    # link_test = LinkTes()
-    er_nerf_link = ErNerfLink(opt)
-    if not os.path.exists(er_nerf_link.opt.template):
-        er_nerf_link.process_silence_template_video(output_path=er_nerf_link.opt.template, num=300, start_idx=0)
+    link = getattr(implement, opt.link_name + "Link")(opt)
+    if not link:
+        raise "Link not found"
+    if not os.path.exists(link.opt.template):
+        link.process_silence_template_video(output_path=link.opt.template, num=300, start_idx=0)
 
     if opt.mike:
-        mike_listener = MikeListener(loop=asyncio.get_event_loop(), link=er_nerf_link, tts_type=opt.tts)
+        mike_listener = MikeListener(loop=asyncio.get_event_loop(), link=link, tts_type=opt.tts)
         mike_listener.start()
 
     print('start websocket server')
