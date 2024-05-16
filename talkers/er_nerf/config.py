@@ -3,22 +3,22 @@ import os
 
 def set_opt(opt):
     # Custom Settings
-    data_path = os.path.join(opt.base_dir, "talkers", opt.link_name, "data", opt.model_name)
-    opt.asr_model = 'cpierse/wav2vec2-large-xlsr-53-esperanto'
+    data_path = os.path.join(opt.base_dir, "talkers", "er_nerf", "data", opt.model_name)
+    opt.asr_model = 'cpierse/wav2vec2-large-xlsr-53-esperanto' # r'C:\Users\k\.cache\huggingface\hub\models--cpierse--wav2vec2-large-xlsr-53-esperanto\snapshots\5ae6c3174dddd1261dd2816eeb6f060655042026'
     opt.preload = 2
     opt.pose = os.path.join(data_path, "transforms_train.json")
     opt.au = os.path.join(data_path, "au.csv")
     opt.ckpt = os.path.join(data_path, "ngp_kf.pth")
     opt.template = os.path.join(data_path, "template.npy")
-    opt.bg_img = "white"
+    opt.bg_img = "white"  #  os.path.join(data_path, "bc.jpg")  # "white"
     opt.torso_imgs = r''
-    opt.W = 450  # 预处理crop时的原始大小
+    opt.W = 450  # 预处理crop时的原始大小 256
     opt.H = 450
 
     # full_body
     opt.full_body = False
     opt.full_body_imgs = r''
-    opt.crop_x, opt.crop_y = 0, 0
+    opt.crop_x, opt.crop_y = 367, 276
 
     # fixed
     opt.num_rays = 65536

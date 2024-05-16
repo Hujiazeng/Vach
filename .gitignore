@@ -16,3 +16,7 @@ talkers/er_nerf/data_utils/face_parsing/79999_iter.pth
 
 talkers/er_nerf/config.py
 cache_data
+*.cu
+*.h
+*.pth
+*.wav

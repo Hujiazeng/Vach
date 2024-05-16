@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 import os
 import queue
 import threading
@@ -320,7 +321,7 @@ class ASR:
                                       device=self.device)] * 4  # 4 zero padding...
 
         # warm up steps needed: mid + right + window_size + attention_size
-        self.warm_up_steps = self.context_size + self.stride_left_size + self.stride_right_size + 8 + 2 * 3
+        self.warm_up_steps = self.context_size + self.stride_left_size + self.stride_right_size # + 8 + 2 * 3
 
         self.listening = False
         self.playing = False
@@ -492,6 +493,7 @@ class ErNerfLink:
         self.ind_num = self.trainer.model.individual_codes.shape[0]
         # build asr
         self.asr = ASR(opt)
+        self.asr.warm_up()
 
         # render thread
         self.loop = None
@@ -538,7 +540,7 @@ class ErNerfLink:
     def push_audio(self, byte_stream):
         if self.opt.tts == "edgetts":
             self.asr.input_stream.write(byte_stream)
-            if len(byte_stream) <= 0:
+            if len(byte_stream)<=0:
                 self.asr.input_stream.seek(0)
                 stream = self.get_adapter_stream(self.asr.input_stream)  # 统一转换格式
                 streamlen = stream.shape[0]
@@ -550,7 +552,7 @@ class ErNerfLink:
                     idx += self.asr.chunk
                     num += 1
 
-                self.user_audio_list.append(num)  # test
+                self.user_audio_list.append(stream.shape[0])  # test
                 # if streamlen>0:  #skip last frame(not 20ms)
                 #    self.queue.put(stream[idx:])
                 self.asr.input_stream.seek(0)  # 移动到开始位置
@@ -566,20 +568,11 @@ class ErNerfLink:
                 time.sleep(0.3)
                 continue
 
-            audio_chunk_num = self.user_audio_list.pop(0)  # 320 0.02s
-            # n_frame = int(audio_chunk_num / 2) + 1
-            n_frame = int(audio_chunk_num / 2.) + 1
-            # n_frame = int(audio_chunk_num * (0.02*(25)))
-            # print('输入总帧数： ', n_frame)
+            streamlen = self.user_audio_list.pop(0)  # 320 0.02s
+            audio_time = streamlen / float(self.asr.sample_rate)
+            n_frame = int(math.ceil(audio_time * 25)) + self.asr.warm_up_steps
+            distance_frame = max(10, int(math.ceil((25 - self.opt.real_fps) * audio_time)))
 
-            # calculate time block
-            # 总帧数
-            # n = len(filelist)
-            #
-            # 计算相差帧数
-            # audio_time = int((n_frame / 25)) + 1
-            audio_time = n_frame / 25.
-            distance_frame = int((25 - self.opt.real_fps) * audio_time) + 25  # 默认+1s
             # 计算下一帧出现位置  _streams.
             # 上一段未播放完毕
             if self.video_track.blocks:  # [block1, clear, block2, clear block3]
@@ -669,12 +662,20 @@ class ErNerfLink:
             stream = resampy.resample(x=stream, sr_orig=sample_rate, sr_new=self.asr.sample_rate)
         return stream
 
-    async def say(self, text, voicename="zh-CN-YunxiaNeural", tts_type="edgetts"):
+    async def say(self, text, voicename="zh-CN-YunxiaNeural", tts_type="edgetts"):  # zh-CN-YunyangNeural
         if tts_type == "edgetts":
             communicate = edge_tts.Communicate(text, voicename)
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
                     self.push_audio(chunk["data"])
+                elif chunk["type"] == "WordBoundary":
+                    pass
+
+    # def _clean(self):
+    #     self.asr.queue = Queue()
+    #     self.asr.input_stream = BytesIO()
+    #     self.video_track._queue = asyncio.Queue()
+    #     self.audio_track._queue = asyncio.Queue()
 
     def process_silence_template_video(self, output_path, num=300, start_idx=0):
         print('Generate silence template video...')

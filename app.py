@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--real_fps', type=int, default=25)
     parser.add_argument('--mike', action='store_true', help="start mike listen")
     parser.add_argument('--tts', type=str, default='edgetts')  # xtts
-    parser.add_argument('--link_name', type=str, default='SyncTalk', help="Choose Link")  # ErNerf SyncTalk
+    parser.add_argument('--link_name', type=str, default='ErNerf', help="Choose Link")  # ErNerf SyncTalk
     parser.add_argument('--model_name', type=str, default='obama')
     opt = parser.parse_args()
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
