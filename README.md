@@ -35,6 +35,8 @@ pip install ./raymarching
 ```
 
 #### 数字人模型文件
+我们提供[预训练模型](https://github.com/Fictionarry/ER-NeRF/releases/tag/ckpt)下载并测试
+
 可以替换成自己训练的模型(https://github.com/Fictionarry/ER-NeRF)
 ```python
 .
