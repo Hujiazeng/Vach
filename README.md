@@ -43,7 +43,7 @@ pip install ./raymarching
 │       ├── transforms_train.json
 │       ├── au.csv			
 │       ├── ngp_kf.pth
-│       ├── template.npy
+│       ├── template.npy(首次运行自动生成)
 
 ```
 
