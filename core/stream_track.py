@@ -25,9 +25,10 @@ AUDIO_TIME_BASE = fractions.Fraction(1, SAMPLE_RATE)
 
 
 class PlayerStreamTrack(MediaStreamTrack):
-    def __init__(self, player, kind, streams=None):
+    def __init__(self, player, kind, streams=None, block_mode=True):
         super().__init__()
         self.kind = kind
+        self.block_mode = block_mode
         self._player = player
         self._queue = asyncio.Queue()
         self._streams = streams
@@ -43,7 +44,6 @@ class PlayerStreamTrack(MediaStreamTrack):
         self.has_block = False
         self.blocks = []
         self.audio_chunk = 320  # 16000/(25fps*2)
-        self.flag = False # test
         self.n_frame = 0
 
         # 默认空音频
@@ -85,80 +85,50 @@ class PlayerStreamTrack(MediaStreamTrack):
 
         self._player._start(self)
 
-        if self.kind == 'video':
-            if len(self._streams) < self.train_data_idx + 1:
-                self.train_data_idx = 0
-                if self.has_block:
-                    self.laps += 1
+        if self.block_mode:
+            if self.kind == 'video':
+                if len(self._streams) < self.train_data_idx + 1:
+                    self.train_data_idx = 0
+                    if self.has_block:
+                        self.laps += 1
 
-            if not self.has_block and self.blocks:
-                # 取一个block 初始化状态
-                self.insert_frame_laps, self.insert_frame_idx, self.end_frame_laps, self.end_frame_idx, self.n_frame = self.blocks.pop(0)
-                self.laps = 0
-                self.has_block = True
+                if not self.has_block and self.blocks:
+                    # 取一个block 初始化状态
+                    self.insert_frame_laps, self.insert_frame_idx, self.end_frame_laps, self.end_frame_idx, self.n_frame = self.blocks.pop(0)
+                    self.laps = 0
+                    self.has_block = True
 
-            if self.has_block and self.laps == self.insert_frame_laps and self.train_data_idx == self.insert_frame_idx:
-                self._player.read_from_render = True
-                self._player.block_audio_frames = self.n_frame * 2
-                self._player.listen_from_render = True
-                self.flag = True  # test
-                # print('Read from render ')
+                if self.has_block and self.laps == self.insert_frame_laps and self.train_data_idx == self.insert_frame_idx:
+                    self._player.read_from_render = True
+                    self._player.block_audio_frames = self.n_frame * 2
 
-            if self.has_block and (self.laps > self.end_frame_laps or (self.laps == self.end_frame_laps and self.train_data_idx >= self.end_frame_idx)):
-                self._player.read_from_render = False
-                self.has_block = False
-                # print('End read from render ')
+                if self.has_block and (self.laps > self.end_frame_laps or (self.laps == self.end_frame_laps and self.train_data_idx >= self.end_frame_idx)):
+                    self._player.read_from_render = False
+                    self.has_block = False
 
-            if self._player.read_from_render:
-                # print('Video: ', time.time())
-                # print('start read frame')
-                if self.flag:
-                    # print('First Into Video Time: ', time.time())
-                    # print("Left Video Length: ", self._queue.qsize())
-                    self.flag = False
-                frame = await self._queue.get()
-                # print('end read frame')
-                self.no_play_frame_nums -= 1
-                # print("Video frame@@@@@@")
+                if self._player.read_from_render:
+                    frame = await self._queue.get()
+                    self.no_play_frame_nums -= 1
+                else:
+                    frame = self._streams[self.train_data_idx]  # 默认播放talker的模板视频
+
             else:
-                frame = self._streams[self.train_data_idx]  # 默认播放talker的模板视频
-
-        else:
-            # audio
-            if self._player.block_audio_frames:    # use video read from render not accurate
-                if self._player.listen_from_render:
-                    # print('First Into Audio Time: ', time.time())
-                    # print("Left Audio Length: ", self._queue.qsize())
-                    self._player.listen_from_render = False
-                # print('Audio: ', time.time())
-                # print("!!! start Audio Read from render !!!")
-                # t = time.time()
-                # print("left .qsize(): " , self._queue.qsize())
-                try:
-                    frame = await asyncio.wait_for(self._queue.get(), 1)  # 阻塞会影响timestamp计算导致卡顿
-                except asyncio.TimeoutError:
+                # audio
+                if self._player.block_audio_frames:    # use video read from render not accurate
+                    try:
+                        frame = await asyncio.wait_for(self._queue.get(), 1)  # 阻塞会影响timestamp计算导致卡顿
+                    except asyncio.TimeoutError:
+                        frame = self.default_audio_frame
+                    self._player.block_audio_frames -= 1
+                else:
                     frame = self.default_audio_frame
-
-                self._player.block_audio_frames -= 1
-                # frame = await self._queue.get()  # 阻塞等待  # todo  上一段没播放完毕
-                # print("!!! end Audio Read from render !!!")
-                # print("Audio frame-------")
-                # print("wait time: ", time.time() - t)
-                # print("self._queue.qsize(): " , self._queue.qsize())
-
-            else:
-                frame = self.default_audio_frame
+        else:
+            frame = await self._queue.get()
 
         if frame is None:
             self.stop()
             print('stop')
             raise MediaStreamError
-
-        # control  手动控制导致卡顿 并且也存在延迟
-        # gap = 0.04 if self.kind == 'video' else 0.02
-        # delay = gap - (time.time() - start_time)  # 40ms
-        # if delay > 0:
-        #     await asyncio.sleep(delay)
 
         pts, time_base = await self.next_timestamp()
         # frame = VideoFrame(width=640, height=480)
@@ -168,8 +138,8 @@ class PlayerStreamTrack(MediaStreamTrack):
         frame.time_base = time_base
         # if self.kind == 'audio':
         #     frame.sample_rate = SAMPLE_RATE
-
-        self.train_data_idx += 1
+        if self.block_mode:
+            self.train_data_idx += 1
         return frame
 
     def stop(self):
@@ -187,8 +157,12 @@ def player_worker(
         # video_track,
         quit_event,
 ):
-    # uncoupled
-    talker_link.listen_and_calculate_block(quit_event, loop)
+    if talker_link.opt.block_mode:
+        # uncoupled
+        talker_link.listen_and_calculate_block(quit_event, loop)
+    else:
+        talker_link.render(quit_event, loop)
+
 
 class MetaHumanPlayer:  # MediaPlayer
     """A media source that reads audio and/or video from a file."""
@@ -207,11 +181,10 @@ class MetaHumanPlayer:  # MediaPlayer
         self.__video: Optional[PlayerStreamTrack] = None
 
         self.read_from_render = False
-        self.listen_from_render = False
         self.block_audio_frames = 0
         # self.block_video_frames = 0
-        self.__audio = PlayerStreamTrack(self, kind="audio")
-        self.__video = PlayerStreamTrack(self, kind="video", streams=talker.get_video_stream())
+        self.__audio = PlayerStreamTrack(self, kind="audio", block_mode=talker.opt.block_mode)
+        self.__video = PlayerStreamTrack(self, kind="video", streams=talker.get_video_stream(), block_mode=talker.opt.block_mode)
 
     @property
     def audio(self) -> MediaStreamTrack:

@@ -497,10 +497,11 @@ class ErNerfLink:
 
         # render thread
         self.loop = None
-        self.render_blocks = []
-        self.__render_thread, self.__render_thread_quit = None, None
-        self.datasets = self.load_dataset()
-        self.start_render_thread()
+        if self.opt.block_mode:
+            self.render_blocks = []
+            self.__render_thread, self.__render_thread_quit = None, None
+            self.datasets = self.load_dataset()
+            self.start_render_thread()
 
     def start_render_thread(self):
         if self.__render_thread is None:
@@ -620,32 +621,65 @@ class ErNerfLink:
 
                 data = self.datasets[idx]
                 # data = next(self.loader)
-
-                # video submit
-                data['auds'] = self.asr.get_next_feat()
-                outputs = self.trainer.test_gui_with_data(data, self.W, self.H)
-                image = (outputs['image'] * 255).astype(np.uint8)
-                if self.opt.full_body:  # todo dataloader
-                    full_body_img = cv2.imread(os.path.join(self.opt.full_body_imgs, str(data['index'][0])+'.jpg'))
-                    full_body_img = cv2.cvtColor(full_body_img, cv2.COLOR_BGR2RGB)
-                    full_body_img[self.opt.crop_y:self.opt.crop_y + image.shape[0], self.opt.crop_x:self.opt.crop_x + image.shape[1]] = image
-                    video_frame = VideoFrame.from_ndarray(full_body_img, format="rgb24")
-                else:
-                    video_frame = VideoFrame.from_ndarray(image, format="rgb24")
-                asyncio.run_coroutine_threadsafe(self.video_track._queue.put(video_frame), self.loop)
-                # audio submit
-                for _ in range(2):
-                    frame = self.asr.get_audio_out()
-                    frame = (frame * 32767).astype(np.int16)  # 16bit
-                    audio_frame = AudioFrame(format='s16', layout='mono',
-                                             samples=int(AUDIO_PTIME * SAMPLE_RATE))  # 16000/fps
-                    audio_frame.planes[0].update(frame.tobytes())
-                    audio_frame.sample_rate = 16000
-                    asyncio.run_coroutine_threadsafe(self.audio_track._queue.put(audio_frame), self.loop)
+                self.render_data_submit_track(data)
 
                 count += 1
             print(f"------block fps------ : {count / (time.time()-t) :.4f}")
             # print("Block Finished")
+
+    def render(self,  quit_event, loop=None):
+        if self.loop is None:
+            self.loop = loop
+
+        count=0
+        totaltime=0
+        _starttime=time.perf_counter()
+        _totalframe=0
+        while not quit_event.is_set():
+            t = time.perf_counter()
+            for _ in range(2):
+                self.asr.run_step()
+            try:
+                data = next(self.loader)
+            except StopIteration:
+                self.loader = iter(self.data_loader)
+                data = next(self.loader)
+            self.render_data_submit_track(data)
+            totaltime += (time.perf_counter() - t)
+            count += 1
+            _totalframe += 1
+            if count==300:
+                print(f"------fps:{count/totaltime:.4f}")
+                count=0
+                totaltime=0
+            delay = _starttime+_totalframe*0.04-time.perf_counter() #40ms
+            if delay > 0:
+                time.sleep(delay)
+
+    def render_data_submit_track(self, data):
+        """渲染单帧并提交轨道"""
+        # video submit
+        data['auds'] = self.asr.get_next_feat()
+        outputs = self.trainer.test_gui_with_data(data, self.W, self.H)
+        image = (outputs['image'] * 255).astype(np.uint8)
+        if self.opt.full_body:  # todo dataloader
+            full_body_img = cv2.imread(os.path.join(self.opt.full_body_imgs, str(data['index'][0]) + '.jpg'))
+            full_body_img = cv2.cvtColor(full_body_img, cv2.COLOR_BGR2RGB)
+            full_body_img[self.opt.crop_y:self.opt.crop_y + image.shape[0],
+            self.opt.crop_x:self.opt.crop_x + image.shape[1]] = image
+            video_frame = VideoFrame.from_ndarray(full_body_img, format="rgb24")
+        else:
+            video_frame = VideoFrame.from_ndarray(image, format="rgb24")
+        asyncio.run_coroutine_threadsafe(self.video_track._queue.put(video_frame), self.loop)
+        # audio submit
+        for _ in range(2):
+            frame = self.asr.get_audio_out()
+            frame = (frame * 32767).astype(np.int16)  # 16bit
+            audio_frame = AudioFrame(format='s16', layout='mono',
+                                     samples=int(AUDIO_PTIME * SAMPLE_RATE))  # 16000/fps
+            audio_frame.planes[0].update(frame.tobytes())
+            audio_frame.sample_rate = 16000
+            asyncio.run_coroutine_threadsafe(self.audio_track._queue.put(audio_frame), self.loop)
 
     def get_adapter_stream(self, byte_stream):
         stream, sample_rate = sf.read(byte_stream)

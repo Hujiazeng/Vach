@@ -93,6 +93,12 @@ if __name__ == '__main__':
     opt.base_dir = os.path.dirname(os.path.abspath(__file__))  # root
     opt.real_fps = 15
     opt.real_fps = min(opt.real_fps, 25)  # <=25
+    if opt.real_fps >= 25:
+        opt.block_mode = False
+    else:
+        opt.block_mode = True
+
+    print('Block Mode: {}'.format(opt.block_mode))
 
     # aiortc
     web_app = web.Application()
@@ -115,7 +121,7 @@ if __name__ == '__main__':
     link = getattr(implement, opt.link_name + "Link")(opt)
     if not link:
         raise "Link not found"
-    if not os.path.exists(link.opt.template):
+    if not os.path.exists(link.opt.template) and opt.block_mode:
         link.process_silence_template_video(output_path=link.opt.template, num=300, start_idx=0)
 
     if opt.mike:
