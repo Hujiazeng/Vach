@@ -182,9 +182,9 @@ class MetaHumanPlayer:  # MediaPlayer
 
         self.read_from_render = False
         self.block_audio_frames = 0
-        # self.block_video_frames = 0
+        streams = talker.get_video_stream() if talker.opt.block_mode else None
         self.__audio = PlayerStreamTrack(self, kind="audio", block_mode=talker.opt.block_mode)
-        self.__video = PlayerStreamTrack(self, kind="video", streams=talker.get_video_stream(), block_mode=talker.opt.block_mode)
+        self.__video = PlayerStreamTrack(self, kind="video", streams=streams, block_mode=talker.opt.block_mode)
 
     @property
     def audio(self) -> MediaStreamTrack:

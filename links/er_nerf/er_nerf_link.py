@@ -74,6 +74,7 @@ class NerfTestDataset:
         self.auds = None
         self.eye_area = []
         self.torso_img = []
+        self.full_body_img = []
         for f in tqdm(frames, desc=f'Loading {type} data'):
             pose = np.array(f['transform_matrix'], dtype=np.float32)  # [4, 4]
             pose = nerf_matrix_to_ngp(pose, scale=self.scale, offset=self.offset)
@@ -88,6 +89,12 @@ class NerfTestDataset:
                     self.torso_img.append(torso_img)
                 else:
                     self.torso_img.append(torso_img_path)
+
+            if self.opt.full_body:
+                full_body_img_path = os.path.join(self.opt.full_body_imgs, str(f['img_id']) + '.jpg')
+                full_body_img = cv2.imread(full_body_img_path)  # [H, W, 3]
+                full_body_img = cv2.cvtColor(full_body_img, cv2.COLOR_BGR2RGB)
+                self.full_body_img.append(full_body_img)
 
             if self.opt.exp_eye:
                 # action units blink AU45
@@ -225,9 +232,10 @@ class NerfTestDataset:
         else:
             bg_img = self.bg_img.view(1, -1, 3).repeat(B, 1, 1).to(self.device)
 
-        # # load full_body
-        # if self.opt.full_body:
-
+        # load full_body
+        if self.opt.full_body:
+            full_body_img = self.full_body_img[index[0]]
+            results['full_body_img'] = full_body_img
 
         results['bg_color'] = bg_img
 
@@ -663,8 +671,9 @@ class ErNerfLink:
         outputs = self.trainer.test_gui_with_data(data, self.W, self.H)
         image = (outputs['image'] * 255).astype(np.uint8)
         if self.opt.full_body:  # todo dataloader
-            full_body_img = cv2.imread(os.path.join(self.opt.full_body_imgs, str(data['index'][0]) + '.jpg'))
-            full_body_img = cv2.cvtColor(full_body_img, cv2.COLOR_BGR2RGB)
+            full_body_img = data['full_body_img']
+            # full_body_img = cv2.imread(os.path.join(self.opt.full_body_imgs, str(data['index'][0]) + '.jpg'))
+            # full_body_img = cv2.cvtColor(full_body_img, cv2.COLOR_BGR2RGB)
             full_body_img[self.opt.crop_y:self.opt.crop_y + image.shape[0],
             self.opt.crop_x:self.opt.crop_x + image.shape[1]] = image
             video_frame = VideoFrame.from_ndarray(full_body_img, format="rgb24")

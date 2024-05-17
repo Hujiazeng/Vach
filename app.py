@@ -3,6 +3,7 @@ import json
 import os
 from threading import Thread
 
+import aiohttp_cors
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from flask import Flask
@@ -105,6 +106,15 @@ if __name__ == '__main__':
     web_app.on_shutdown.append(on_shutdown)
     web_app.router.add_post("/offer", offer)
     web_app.router.add_static('/', path=os.path.join(opt.base_dir, 'web'))
+    cors = aiohttp_cors.setup(web_app, defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+            )
+        })
+    for route in list(web_app.router.routes()):
+        cors.add(route)
 
 
     def run_server(runner):

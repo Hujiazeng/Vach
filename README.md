@@ -28,10 +28,11 @@ conda activate Vach
 pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113
 pip install -r requirements.txt
 pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py38_cu113_pyt1121/download.html
-pip install ./freqencoder
-pip install ./shencoder
-pip install ./gridencoder
-pip install ./raymarching
+# Note the following modules. If installation is unsuccessful, you can navigate to the path and use pip install . or python setup.py install to compile and install.
+# NeRF/freqencoder
+# NeRF/gridencoder
+# NeRF/raymarching
+# NeRF/shencoder
 ```
 
 #### 数字人模型文件

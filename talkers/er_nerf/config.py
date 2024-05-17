@@ -10,15 +10,22 @@ def set_opt(opt):
     opt.au = os.path.join(data_path, "au.csv")
     opt.ckpt = os.path.join(data_path, "ngp_kf.pth")
     opt.template = os.path.join(data_path, "template.npy")
-    opt.bg_img = "white"  #  os.path.join(data_path, "bc.jpg")  # "white"
-    opt.torso_imgs = r''
-    opt.W = 450  # 预处理crop时的原始大小 256
+    opt.W = 450  # 预处理crop时的原始大小 obama 422
     opt.H = 450
 
     # full_body
     opt.full_body = False
-    opt.full_body_imgs = r''
-    opt.crop_x, opt.crop_y = 367, 276
+    if opt.full_body:
+        opt.full_body_imgs = os.path.join(data_path, "fullbody_imgs")
+        opt.torso_imgs = os.path.join(data_path, "torso_imgs")
+        opt.bg_img = os.path.join(data_path, "bc.jpg")
+    else:
+        opt.full_body_imgs = ""
+        opt.torso_imgs = ""
+        opt.bg_img = "white"
+
+    opt.crop_x, opt.crop_y = 0, 0   # obama 24, 20
+    opt.data_range = [0, 300]
 
     # fixed
     opt.num_rays = 65536
@@ -60,7 +67,6 @@ def set_opt(opt):
     opt.fix_eye = -1
     opt.aud = ''
     opt.offset = [0, 0, 0]
-    opt.data_range = [0, -1]
     opt.init_lips = False
     opt.patch_size = 1
     opt.exp_eye = True
