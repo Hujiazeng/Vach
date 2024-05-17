@@ -47,6 +47,8 @@ pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.co
 │       ├── au.csv			
 │       ├── ngp_kf.pth
 │       ├── template.npy(首次运行自动生成)
+│       ├── torso_imgs(仅全身推理时使用)
+│       ├── fullbody_imgs(仅全身推理时使用)
 
 ```
 
